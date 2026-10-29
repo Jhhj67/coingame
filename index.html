@@ -1,438 +1,372 @@
-<html lang="en-us"><script src="https://pygame-web.github.io/cdn/0.9.3/pythons.js" type=module id="site" data-python="python3.12" data-LINES=42 data-COLUMNS=132 data-os="vtx,snd,gui" async defer>#<!--
-
-print("""
-Loading coingame_web from coingame_web.apk
-    Pygbag Version : 0.9.3
-    Template Version : 0.9.3
-    Python  : 3.12
-    CDN URL : https://pygame-web.github.io/cdn/0.9.3/
-    Screen  : 1280x720
-    Title   : coingame_web
-    Folder  : coingame_web
-    Authors : pgw
-    SPDX-License-Identifier: cookiecutter.spdx
-
-""")
-
-import sys
-import asyncio
-import platform
-import json
-from pathlib import Path
-
-# do not rename
-async def custom_site():
-    import embed
-    platform.document.body.style.background = "#7f7f7f"
-
-    platform.window.transfer.hidden = true
-    platform.window.canvas.style.visibility = "visible"
-
-
-    bundle = "coingame_web"
-
-    # the C or js loader could do that but be explicit.
-    appdir = Path(f"/data/data/{bundle}") # /data/data/coingame_web
-    appdir.mkdir()
-
-
-    # unpack filesystem from compressed archive into work dir
-    if platform.window.location.host.find('.itch.zone')>0:
-        import zipfile
-        async with platform.fopen("coingame_web.apk", "rb") as archive:
-            with zipfile.ZipFile(archive) as zip_ref:
-                zip_ref.extractall(appdir.as_posix())
-    else:
-        import tarfile
-        async with platform.fopen("coingame_web.tar.gz", "rb") as archive:
-            tar = tarfile.open(fileobj=archive, mode="r:gz")
-            tar.extractall(path=appdir.as_posix(), filter='tar')
-            tar.close()
-
-    # preloader will change to work dir and prepend it to sys.path
-    platform.run_main(PyConfig, loaderhome= appdir / "assets", loadermain=None)
-
-
-    # wait preloading complete : that includes images and wasm compilation of bundled modules
-    while embed.counter()<0:
-        await asyncio.sleep(.1)
-
-    main = appdir / "assets" / "main.py"
-
-    # TODO: test for window.webkitAudioContext and block aio loop until gesture if accessing media manager play
-    # before a gesture is recorded ( touch or click )
-
-    # test/wait user media interaction
-    if not platform.window.MM.UME:
-
-        # now that apk is mounted we have access to font cache
-        # but we need to fill __file__ that is not yet set
-        __import__(__name__).__file__ = main
-
-        # now make a prompt
-        msg  = "Ready to start ! Please click/touch page"
-        platform.window.infobox.innerText = msg
-        print("\n"*4, f"    * Waiting for media user engagement. {msg} *" , "\n"*4)
-
-        while not platform.window.MM.UME:
-            await asyncio.sleep(.1)
-
-    # start async top level machinery if not started and add a console in any case if requested.
-    await TopLevel_async_handler.start_toplevel(platform.shell, console=window.python.config.debug)
-
-    # now that apk is mounted we have access to font cache
-    # but we need to fill __file__/__name__ that are not yet set
-    __import__(__name__).__file__ = main
-
-
-    def ui_callback(pkg):
-        platform.window.infobox.innerText = f"installing {pkg}"
-
-    await shell.source(main, callback=ui_callback)
-
-    # if you don't reach that step
-    # your main.py has an infinite sync loop somewhere !
-
-    platform.window.infobox.style.display = "none"
-    platform.window.config.gui_divider = 1
-    platform.window.window_resize()
-    print("default.tmpl: done")
-
-    shell.interactive()
-
-asyncio.run( custom_site() )
-
-
-
-
-
-
-
-
-
-
-
-
-# BEGIN BLOCK
-#
-# now this is the html part you can (and should) customize
-# It is not mandatory : pygame-script when it reads the first line (also called
-# shebang ) of above code create absolute minimal widget set
-# required for running with default rules
-#
-# do not alter that comment block it is separating python code from html code
-# =============================================================================
-# --></script><head><!--
-//=============================================================================
-//
-//
-//
-//
-//
-//
-//
-
-    {%- if cookiecutter.comment != "" -%}
-{{cookiecutter.comment}}
-    {% endif %}
-
---><script type="application/javascript">
-// END BLOCK
-
-
-
-// this dict is available under PyConfig.config from __main__
-
-config = {
-    xtermjs : "1" ,
-    _sdl2 : "canvas",
-    user_canvas : 0,
-    user_canvas_managed : 0,
-    gui_divider : 2,
-    ume_block : 1,
-    can_close : 0,
-    archive : "coingame_web",
-    gui_debug : 2,
-    cdn : "https://pygame-web.github.io/cdn/0.9.3/",
-    autorun : 0,
-    PYBUILD : "3.12",
-    fb_ar   :  1.77,
-    fb_width : "1280",
-    fb_height : "720"
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>동전게임 · Coin Game</title>
+<meta name="description" content="도서관 파이썬 책에서 시작된 동전게임. 동전을 모으고 장애물을 피하고, 친구와 온라인 대결까지! 브라우저에서 바로 데모를 해 볼 수 있어요.">
+<meta name="theme-color" content="#150728">
+<meta property="og:title" content="동전게임 · Coin Game">
+<meta property="og:description" content="동전을 모으고 장애물을 피하는 아케이드 게임. 데모 해보기 · 온라인 대결 지원">
+<link rel="icon" href="favicon.png">
+<style>
+:root{
+  --bg1:#150728; --bg2:#2a0f4e; --card:#ffffff10; --line:#ffffff24;
+  --text:#f4eefc; --mut:#b9a9d6; --gold:#ffd23f; --orange:#ff9f1c; --violet:#a66bff;
 }
-
-function show_infobox() {
-    infobox.style.display = "block";
-
-    // Measure box
-    const w = infobox.offsetWidth;
-    const h = infobox.offsetHeight;
-
-    // Center in viewport
-    const left = (window.innerWidth - w) / 2;
-    const top = (window.innerHeight - h) / 2;
-
-    infobox.style.left = left + "px";
-    infobox.style.top = top + "px";
+*{box-sizing:border-box}
+html{color-scheme:dark; background:#150728; scroll-behavior:smooth; scroll-padding-top:72px}
+body{
+  margin:0; color:var(--text); word-break:keep-all; overflow-wrap:break-word;
+  font:16px/1.7 "Pretendard","Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  background:radial-gradient(1100px 560px at 50% -8%,#4b1d86 0,transparent 62%),linear-gradient(180deg,var(--bg2),var(--bg1) 60%) fixed;
 }
+body.lock{overflow:hidden}
+img{image-rendering:pixelated; image-rendering:crisp-edges}
+a{color:inherit}
+.wrap{max-width:1040px; margin:0 auto; padding:0 18px}
+section{padding:56px 0 8px}
+h2{font-size:clamp(22px,3.4vw,28px); margin:0 0 6px; letter-spacing:.3px}
+h2 small{display:block; font-size:13px; font-weight:600; letter-spacing:2px; color:var(--gold); margin-bottom:2px}
+.lead{color:var(--mut); margin:0 0 22px; max-width:640px}
+button,.btn{
+  font:inherit; font-size:14px; color:var(--text); background:#ffffff14; border:1px solid var(--line);
+  padding:8px 16px; border-radius:999px; cursor:pointer; text-decoration:none; white-space:nowrap; display:inline-flex; align-items:center; gap:6px;
+  transition:background .15s,transform .05s,box-shadow .2s;
+}
+button:hover,.btn:hover{background:#ffffff26}
+button:active,.btn:active{transform:translateY(1px)}
+:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+.primary{background:var(--gold); color:#2a1700; border-color:transparent; font-weight:800}
+.primary:hover{background:#ffe07a; box-shadow:0 0 0 6px #ffd23f33}
+.big{font-size:18px; padding:14px 28px}
 
-</script>
+/* 위쪽 메뉴 */
+nav{position:sticky; top:0; z-index:20; background:#150728cc; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-bottom:1px solid var(--line)}
+nav .wrap{display:flex; align-items:center; gap:6px; height:56px}
+nav .brand{display:flex; align-items:center; gap:8px; font-weight:800; text-decoration:none; margin-right:8px; white-space:nowrap}
+nav .brand img{width:26px; height:26px}
+nav .links{display:flex; gap:2px; overflow-x:auto; scrollbar-width:none; flex:1}
+nav .links::-webkit-scrollbar{display:none}
+nav .links a{padding:6px 11px; border-radius:999px; text-decoration:none; font-size:14px; color:var(--mut); white-space:nowrap}
+nav .links a:hover,nav .links a.on{color:var(--text); background:#ffffff18}
+nav .right{display:flex; gap:8px; margin-left:auto}
+nav button{padding:6px 14px}
 
-    <title>coingame_web</title>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="viewport" content="height=device-height, initial-scale=1.0">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes"/>
+/* 첫 화면 */
+.hero{padding:64px 0 28px; text-align:center; position:relative; overflow:hidden}
+.hero .badge{display:inline-block; font-size:13px; color:var(--gold); border:1px solid #ffd23f66; padding:2px 12px; border-radius:999px; margin-bottom:14px}
+.hero h1{font-size:clamp(36px,8vw,68px); line-height:1.1; margin:0 0 12px; letter-spacing:1px}
+.hero h1 em{font-style:normal; color:var(--gold); text-shadow:0 0 30px #ffd23f66}
+.hero p.tag{font-size:clamp(16px,2.4vw,20px); color:var(--mut); margin:0 auto 28px; max-width:620px}
+.hero .cta{display:flex; flex-wrap:wrap; gap:12px; justify-content:center}
+.hero .hint{margin-top:14px; font-size:13px; color:var(--mut)}
+.hero .wrap{position:relative; z-index:1}
+.float{z-index:0; position:absolute; width:44px; height:44px; opacity:.9; animation:fall linear infinite; pointer-events:none}
+@keyframes fall{0%{transform:translateY(-60px) rotate(0)}100%{transform:translateY(520px) rotate(360deg)}}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:44px}
+.stat{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px 8px}
+.stat b{display:block; font-size:26px; color:var(--gold)}
+.stat span{font-size:13px; color:var(--mut)}
 
+/* 카드 */
+.grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px}
+.card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px 18px}
+.card h3{font-size:17px; margin:0 0 6px; color:var(--gold)}
+.card p{margin:4px 0; font-size:15px; color:#e3d9f5}
+.card .ic{font-size:26px; line-height:1; margin-bottom:6px}
+.family{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.skin{text-align:center; padding:14px 10px}
+.skin img{width:72px; height:72px; margin:0 auto 6px; display:block; filter:drop-shadow(0 6px 10px #0008)}
+.skin h3{font-size:15px; margin:2px 0 4px}
+.skin p{font-size:12.5px; color:var(--mut); line-height:1.5; margin:0}
+.skin.secret img{filter:brightness(0) opacity(.5)}
+.items{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.item{display:flex; gap:12px; align-items:flex-start; padding:12px 14px}
+.item img{width:44px; height:44px; flex:none}
+.item h3{font-size:15px; margin:0}
+.item p{font-size:13.5px; color:var(--mut); margin:0; line-height:1.5}
+.locked{font-size:11px; color:#2a1700; background:var(--gold); border-radius:999px; padding:0 7px; margin-left:6px; vertical-align:middle}
+kbd{display:inline-block; min-width:1.7em; text-align:center; padding:0 .45em; border-radius:6px; border:1px solid #ffffff44; border-bottom-width:3px; background:#ffffff14; font:600 13px/1.6 ui-monospace,Consolas,monospace}
+ul.plain{padding-left:18px; margin:6px 0 0}
+ul.plain li{margin:5px 0; font-size:15px}
 
-    <link rel="icon" type="image/png" href="favicon.png" sizes="16x16">
+/* 역사서 */
+.timeline{position:relative; margin:8px 0 0; padding-left:26px}
+.timeline::before{content:""; position:absolute; left:7px; top:6px; bottom:6px; width:2px; background:linear-gradient(var(--gold),var(--violet))}
+.tl{position:relative; margin:0 0 16px; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px 18px}
+.tl::before{content:""; position:absolute; left:-26px; top:20px; width:16px; height:16px; border-radius:50%; background:var(--gold); border:3px solid #2a0f4e; box-shadow:0 0 0 2px var(--gold)}
+.tl .when{font-size:13px; font-weight:700; color:var(--gold); letter-spacing:.5px}
+.tl h3{margin:2px 0 4px; font-size:18px}
+.tl p{margin:3px 0; font-size:15px; color:#e3d9f5}
+.tl .ver{display:inline-block; font:700 12px/1.6 ui-monospace,Consolas,monospace; background:#ffffff18; border-radius:6px; padding:0 7px; margin-right:6px}
+.reveal{opacity:0; transform:translateY(14px); transition:opacity .5s,transform .5s}
+.reveal.in{opacity:1; transform:none}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}.float{display:none}html{scroll-behavior:auto}}
+details{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px 18px; margin-top:12px}
+summary{cursor:pointer; font-weight:700; color:var(--gold)}
+details ul{margin:10px 0 2px; padding-left:18px}
+details li{margin:5px 0; font-size:15px}
+footer{margin:56px 0 0; padding:26px 0 40px; border-top:1px solid var(--line); color:var(--mut); font-size:13.5px; text-align:center}
+footer p{margin:4px 0}
 
-    <style>
-        #status {
-            display: inline-block;
-            vertical-align: top;
-            margin-top: 20px;
-            margin-left: 30px;
-            font-weight: bold;
-            color: rgb(120, 120, 120);
-        }
-
-        #progress {
-            height: 20px;
-            width: 300px;
-        }
-
-        #infobox {
-            position: fixed; /* center relative to viewport */
-            background: green;
-            color: blue;
-            font-weight: bold;
-            padding: 12px 24px;
- /*           display: none; */
-            z-index: 999999;
-        }
-        div.emscripten { text-align: center; }
-        div.emscripten_border { border: 1px solid black; }
-        div.thick_border { border: 4px solid black; }
-
-        /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
-        /* average size of droid screen 470dp x 320dp  */
-        canvas.emscripten {
-            border: 0px none;
-            background-color: transparent;
-            width: 100%;
-            height: 100%;
-            z-index: 5;
-
-            padding: 0;
-            margin: 0 auto;
-
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
-        }
-
-        body {
-            font-family: arial;
-            margin: 0;
-            padding: none;
-            background-color:powderblue;
-        }
-
-        .topright{
-           position:absolute;
-           top:0px;
-           right:0px;
-        }
-
-        .bottomright {
-            position:absolute;
-            top: 40%;
-            right: 0px;
-        }
-
-        .center {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .trinfo{
-           position: relative;
-           right: 0px;
-           border: 1px solid black;
-        }
-
-        .framed{
-           position: relative;
-           top: 150px;
-           right: 10px;
-           border: 1px solid black;
-        }
-    </style>
-
-    <script>
-/*
-        if (navigator.serviceWorker)
-            navigator.serviceWorker.register("https://pygame-web.github.io/cdn/0.9.3/pygbag0.9.3.js")
-        else
-            console.warn("Service workers not supported")
-*/
-    </script>
-
-    <script src="https://pygame-web.github.io/cdn/0.9.3//browserfs.min.js"></script>
-
+/* 데모 창 */
+.modal{position:fixed; inset:0; z-index:50; background:#0b0316f2; display:flex; flex-direction:column; align-items:center; padding:10px 10px 8px}
+.modal[hidden]{display:none}
+.mbar{width:min(100%,1100px); display:flex; align-items:center; gap:8px; padding:4px 2px 10px}
+.mbar b{margin-right:auto}
+.mstage{position:relative; width:clamp(min(100%,420px),calc((100vh - 120px)*1.6),min(100%,1100px)); width:clamp(min(100%,420px),calc((100dvh - 120px)*1.6),min(100%,1100px)); aspect-ratio:16/10; background:#000; border-radius:14px; overflow:hidden; border:2px solid #ffd23f55; box-shadow:0 0 70px #8a3ffc55}
+.mstage iframe{position:absolute; inset:0; width:100%; height:100%; border:0; background:#000}
+.mstage .loading{position:absolute; inset:0; display:grid; place-content:center; justify-items:center; gap:8px; color:var(--mut); text-align:center; padding:14px}
+.mstage.ready .loading{display:none}
+.mstage .loading img{width:48px; height:48px; animation:spin 1.6s linear infinite}
+@keyframes spin{to{transform:rotateY(360deg)}}
+.mhint{margin:10px 0 0; color:var(--mut); font-size:13px; text-align:center}
+.en-only{display:none}
+@media (max-width:640px){
+  nav .brand span{display:none}
+  .hero{padding-top:44px}
+  .float{opacity:.3}
+}
+</style>
 </head>
-
 <body>
-
-    <div id="transfer" align=center>
-<!--        <div class="spinner" id='spinner'></div> -->
-        <div class="emscripten" id="status">Downloading...</div>
-        <div class="emscripten">
-            <progress value="0" max="100" id="progress"></progress>
-        </div>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="img/coin.png" alt="" onerror="this.style.display='none'"><span>동전게임</span></a>
+    <div class="links" id="links">
+      <a href="#features" data-en="Features">특징</a>
+      <a href="#family" data-en="Coin Family">동전 가족</a>
+      <a href="#items" data-en="Items">아이템</a>
+      <a href="#online" data-en="Online">온라인 대결</a>
+      <a href="#history" data-en="History">역사서</a>
+      <a href="#howto" data-en="How to play">조작법</a>
     </div>
-
-
-
-    <canvas class="emscripten" id="canvas"
-width="1px"
-height="1px"
-    oncontextmenu="event.preventDefault()" tabindex=1>
-    </canvas>
-
-    <canvas class="emscripten" id="canvas3d"
-width="1280px"
-height="720px"
-    oncontextmenu="event.preventDefault()" tabindex=1 hidden>
-    </canvas>
-
-    <div id="infobox">Loading, please wait ...</div>
-
-    <div id=html></div>
-
-    <div id=crt  class=bottomright >
-
-        <div id="system" hidden>
-            <div class="button-container">
-                <button id="aiostop" disabled>AIO ⏏︎</button>
-                <button id="aiopaused_true" disabled>AIO ■</button>
-                <button id="aiopaused_false" disabled>AIO ▶</button>
-                <button id="pygame_mixer_music_pause" disabled>Music ■</button>
-            </div>
-
-            <div class="button-container">
-                <div id=load_min>min</div>
-                <div id=load_avg>avg</div>
-                <div id=load_max>max</div>
-              <button id="load_rst" disabled>RESET</button>
-            </div>
-
-            <div id="level">(battery level unknown)</div>
-            <div id="stateBattery">(charging state unknown)</div>
-
-        </div>
-
-        <div id=box class="emscripten_border" hidden=true>
-
-            <div id="info" class="trinfo"></div>
-
-            <iframe id="iframe" class="framed" name="iframe"
-width="470px" height="90%"
-allowtransparency="true"
-style="z-index: 10;"
-style="background: #FFFFFF;"
-frameborder="1"
-                allowfullscreen="true"
-                webkitallowfullscreen="true"
-                msallowfullscreen="true"
-                mozallowfullscreen="true"
-                sandbox="allow-same-origin allow-top-navigation allow-scripts allow-pointer-lock"
-                allow="autoplay; fullscreen *; geolocation; microphone; camera; midi; monetization; xr-spatial-tracking; gamepad; gyroscope; accelerometer; xr; cross-origin-isolated"
-                src="https://pygame-web.github.io/cdn/0.9.3/empty.html"
-                scrolling="yes">
-            </iframe>
-        </div>
-
+    <div class="right">
+      <button id="lang" type="button" aria-label="Language">KO / EN</button>
+      <button class="primary" type="button" data-play>▶ <span data-en="Play demo">데모</span></button>
     </div>
+  </div>
+</nav>
 
-
-    <div id="dlg" hidden>
-        <input type="file" id="dlg_multifile" multiple accept="image/*">
-        <label for="dlg_multifile">Select files</label>
+<main id="top">
+<header class="hero">
+  <img class="float" src="img/coin.png" alt="" style="left:6%;animation-duration:9s;animation-delay:-2s" onerror="this.remove()">
+  <img class="float" src="img/coin.png" alt="" style="left:22%;animation-duration:12s;animation-delay:-7s;width:32px;height:32px" onerror="this.remove()">
+  <img class="float" src="img/obstacle.png" alt="" style="left:78%;animation-duration:11s;animation-delay:-4s" onerror="this.remove()">
+  <img class="float" src="img/coin.png" alt="" style="left:90%;animation-duration:10s;animation-delay:-8s;width:36px;height:36px" onerror="this.remove()">
+  <img class="float" src="img/coin.png" alt="" style="left:64%;animation-duration:13s;animation-delay:-1s;width:30px;height:30px" onerror="this.remove()">
+  <div class="wrap">
+    <span class="badge" data-en="Made with a library Python book">도서관 파이썬 책에서 시작</span>
+    <h1>동전게임<br><em>Coin Game</em></h1>
+    <p class="tag" data-en="Collect coins, dodge obstacles, and challenge a friend online. Try it right in your browser!">동전을 모으고 장애물을 피하고, 친구와 온라인으로 겨뤄 보세요. 브라우저에서 바로 해 볼 수 있어요!</p>
+    <div class="cta">
+      <button class="primary big" type="button" data-play>▶ <span data-en="Play the demo">데모 동전게임 해보기</span></button>
+      <a class="btn big" href="#history" data-en="Read the history">역사서 보기</a>
     </div>
-
-    <div id="pyconsole">
-        <div id="terminal" tabIndex=1 align="left"></div>
+    <p class="hint" data-en="A keyboard is needed. The first load may take a minute or two.">키보드가 필요해요. 처음 열 때는 1~2분 걸릴 수 있어요.</p>
+    <div class="stats">
+      <div class="stat"><b>2025.11.19</b><span data-en="Day it began">시작한 날</span></div>
+      <div class="stat"><b>11</b><span data-en="Coin Family skins">동전 가족 스킨</span></div>
+      <div class="stat"><b>9</b><span data-en="Difficulties &amp; modes">난이도와 모드</span></div>
+      <div class="stat"><b>2.2</b><span data-en="Latest version">최신 버전</span></div>
     </div>
+  </div>
+</header>
 
-    <script type="application/javascript">
+<section id="features"><div class="wrap">
+  <h2><small>FEATURES</small><span data-en="What you can do">이런 게임이에요</span></h2>
+  <p class="lead" data-en="Simple to start, deep enough to keep going.">쉽게 시작하고, 계속 하고 싶어지는 게임을 목표로 만들었어요.</p>
+  <div class="grid">
+    <div class="card reveal"><div class="ic">🪙</div><h3 data-en="Coins &amp; combos">동전과 콤보</h3><p data-en="Keep collecting within 1.5 seconds to build a combo and raise each coin's score.">1.5초 안에 계속 먹으면 콤보가 쌓이고, 동전 하나의 점수가 올라가요.</p></div>
+    <div class="card reveal"><div class="ic">⚠️</div><h3 data-en="Obstacles">장애물</h3><p data-en="Zigzag and splitting obstacles. Touching one costs 1 HP.">지그재그로 움직이고 갈라지는 장애물이 나와요. 닿으면 체력이 1 줄어요.</p></div>
+    <div class="card reveal"><div class="ic">🔄</div><h3 data-en="HP ⇄ Points">체력 ⇄ 점수</h3><p data-en="Trade 1 HP for 5 points, or 5 points back into 1 HP. Your call!">체력 1을 점수 5점으로, 점수 5점을 체력 1로 바꿀 수 있어요. 선택은 내 몫!</p></div>
+    <div class="card reveal"><div class="ic">🎯</div><h3 data-en="Many difficulties &amp; modes">난이도와 모드</h3><p data-en="From Easy to Hell, plus hidden modes: Endless, Adversity and Speedrun.">쉬움부터 지옥까지, 엔드리스·역경·스피드런 같은 숨겨진 모드도 있어요.</p></div>
+    <div class="card reveal"><div class="ic">🏆</div><h3 data-en="Missions &amp; achievements">미션과 업적</h3><p data-en="Clear missions to unlock items and modes, and achievements to unlock skins.">미션을 깨면 새 아이템과 모드가, 업적을 깨면 동전 가족 스킨이 열려요.</p></div>
+    <div class="card reveal"><div class="ic">🎮</div><h3 data-en="Play with a friend">친구와 함께</h3><p data-en="2-player Versus on one keyboard, or Online Versus over the internet.">한 키보드로 하는 2인 대결, 인터넷으로 겨루는 온라인 대결도 있어요.</p></div>
+  </div>
+</div></section>
 
-    globalThis.__canvas_resized = (self, ecw, ech) => {
-        console.warn("TODO: panda3d canvas monitor", self, ecw, ech)
-    }
+<section id="family"><div class="wrap">
+  <h2><small>COIN FAMILY</small><span data-en="The Coin Family">동전 가족</span></h2>
+  <p class="lead" data-en="Each skin has its own ability. Unlock them with achievements!">가족마다 능력이 달라요. 업적을 깨서 하나씩 열어 보세요!</p>
+  <div class="grid family">
+    <div class="card skin reveal"><img src="img/player_normal.png" alt=""><h3 data-en="Default">기본 동전</h3><p data-en="Available from the start.">처음부터 쓸 수 있어요</p></div>
+    <div class="card skin reveal"><img src="img/player_dad.png" alt=""><h3 data-en="Dad Coin">아빠 동전</h3><p data-en="Max HP +1">최대 체력 +1</p></div>
+    <div class="card skin reveal"><img src="img/player_mom.png" alt=""><h3 data-en="Mom Coin">엄마 동전</h3><p data-en="Longer combo window and faster bonus">콤보 유지시간 +0.5초, 보너스가 더 빨리</p></div>
+    <div class="card skin reveal"><img src="img/player_baby.png" alt=""><h3 data-en="Baby Coin">아기 동전</h3><p data-en="Smaller hitbox, +10% speed">충돌판정 축소, 이동속도 +10%</p></div>
+    <div class="card skin reveal"><img src="img/player_grandpa.png" alt=""><h3 data-en="Grandpa Coin">할아버지 동전</h3><p data-en="Starts with 3 shields, longer items">시작 실드 3개, 아이템 오래 지속, 자석 넓게</p></div>
+    <div class="card skin reveal"><img src="img/player_sister.png" alt=""><h3 data-en="Sister Coin">누나 동전</h3><p data-en="Combo break immunity x5">콤보가 끊겨도 5번까지 면역</p></div>
+    <div class="card skin reveal"><img src="img/player_uncle.png" alt=""><h3 data-en="Uncle Coin">삼촌 동전</h3><p data-en="50% to ignore obstacle hits, speed varies">장애물 충돌 50% 무시, 속도는 들쭉날쭉</p></div>
+    <div class="card skin reveal"><img src="img/player_puppy.png" alt=""><h3 data-en="Pet Coin">반려동전</h3><p data-en="Always-on weak magnet">약한 자동 자석이 항상 켜져 있어요</p></div>
+    <div class="card skin reveal"><img src="img/player_twins_pair.png" alt=""><h3 data-en="Twins Coin">쌍둥이 동전</h3><p data-en="Control two bodies at once">두 몸체를 한꺼번에 조종해요</p></div>
+    <div class="card skin secret reveal"><img src="img/player_normal.png" alt=""><h3>???</h3><p data-en="A hidden skin is waiting...">숨겨진 스킨이 기다리고 있어요...</p></div>
+  </div>
+</div></section>
 
-    async function custom_onload(debug_hidden) {
-        // this is called before anything python is loaded
-        // make your js customization here
-        console.log(__FILE__, "custom_onload")
+<section id="items"><div class="wrap">
+  <h2><small>ITEMS</small><span data-en="Items">아이템</span></h2>
+  <p class="lead" data-en="Pick them up as they drift by. The white veil on each slot shows the time left.">흘러가는 아이템을 먹어 보세요. 아이템 칸의 흰 막이 내려오는 것으로 남은 시간을 알 수 있어요.</p>
+  <div class="grid items">
+    <div class="card item reveal"><img src="img/item_magnet.png" alt=""><div><h3 data-en="Magnet">자석</h3><p data-en="Pulls nearby coins for 5s">5초 동안 가까운 코인을 끌어당겨요</p></div></div>
+    <div class="card item reveal"><img src="img/item_slow.png" alt=""><div><h3 data-en="Slow">슬로우</h3><p data-en="Everything slows to half speed for 5s">5초 동안 장애물·코인·아이템이 절반 속도</p></div></div>
+    <div class="card item reveal"><img src="img/item_shield.png" alt=""><div><h3 data-en="Shield">실드</h3><p data-en="Blocks one hit. Stackable">장애물 한 번을 막아 줘요 (여러 개 모을 수 있어요)</p></div></div>
+    <div class="card item reveal"><img src="img/item_heal.png" alt=""><div><h3 data-en="Heal">회복</h3><p data-en="+1 HP">체력 +1</p></div></div>
+    <div class="card item reveal"><img src="img/item_kimchi.png" alt=""><div><h3 data-en="Kimchi">김치</h3><p data-en="Invincible for 5s">5초 동안 무적</p></div></div>
+    <div class="card item reveal"><img src="img/item_l.png" alt=""><div><h3>L</h3><p data-en="A trap! Obstacles slowly home in on you for 16s">함정! 16초 동안 장애물이 천천히 따라와요</p></div></div>
+    <div class="card item reveal"><img src="img/item_timefreeze.png" alt=""><div><h3><span data-en="Time Freeze">타임프리즈</span><span class="locked" data-en="mission">미션</span></h3><p data-en="Obstacles stop for 5s">5초 동안 장애물이 멈춰요</p></div></div>
+    <div class="card item reveal"><img src="img/item_goldrush.png" alt=""><div><h3><span data-en="Gold Rush">골드러시</span><span class="locked" data-en="mission">미션</span></h3><p data-en="Way more coins for 5s">5초 동안 코인이 훨씬 많이 나와요</p></div></div>
+    <div class="card item reveal"><img src="img/item_minime.png" alt=""><div><h3><span data-en="Mini Me">미니미</span><span class="locked" data-en="mission">미션</span></h3><p data-en="Shrink to half size for 5s">5초 동안 몸이 절반으로 작아져요</p></div></div>
+    <div class="card item reveal"><img src="img/item_rewind.png" alt=""><div><h3><span data-en="Rewind">되감기</span><span class="locked" data-en="mission">미션</span></h3><p data-en="Jump back ~1s when hit and take no damage">맞는 순간 약 1초 전으로 돌아가 피해를 피해요</p></div></div>
+    <div class="card item reveal"><img src="img/item_tot.png" alt=""><div><h3><span data-en="Trick or Treat">트릭 오어 트릿</span><span class="locked" data-en="Halloween">할로윈</span></h3><p data-en="A random Treat (good) or Trick (bad)">할로윈 기간에만! 이득(트릿)이나 함정(트릭)이 랜덤으로</p></div></div>
+  </div>
+</div></section>
 
-        pyconsole.hidden = debug_hidden
-        system.hidden = debug_hidden
-        transfer.hidden = debug_hidden
-        info.hidden = debug_hidden
-        box.hidden =  debug_hidden
+<section id="online"><div class="wrap">
+  <h2><small>ONLINE VERSUS</small><span data-en="Online Versus">온라인 대결</span></h2>
+  <p class="lead" data-en="Meet a friend over the internet and compete for 30 seconds. Whoever has more points wins!">인터넷으로 친구를 만나 30초 동안 점수를 겨뤄요. 시간이 끝났을 때 점수가 높은 쪽이 이겨요!</p>
+  <div class="grid">
+    <div class="card reveal"><h3 data-en="Random match">랜덤매칭</h3><p data-en="Automatically meets someone waiting in the same menu.">같은 메뉴에서 기다리는 사람과 자동으로 만나요.</p></div>
+    <div class="card reveal"><h3 data-en="Room code">방 코드</h3><p data-en="Create a room, share the 4-character code, and your friend types it in. Use the English keyboard.">방을 만들고 4글자 코드를 알려 주세요. 친구가 영어 키보드 상태에서 입력하면 들어와요.</p></div>
+    <div class="card reveal"><h3 data-en="Web &amp; PC together">웹과 PC가 함께</h3><p data-en="Web and PC players can play in the same room.">웹 버전과 PC 버전이 같은 방에서 겨룰 수 있어요.</p></div>
+  </div>
+  <p class="lead" style="margin-top:16px;font-size:14px" data-en="Online play may be blocked on some networks, such as schools. Results are not recorded.">학교 같은 곳에서는 온라인 대결이 막혀 있을 수 있어요. 대결 결과는 기록되지 않아요.</p>
+</div></section>
 
-        show_infobox()
-    }
+<section id="history"><div class="wrap">
+  <h2><small>HISTORY</small><span data-en="History">역사서</span></h2>
+  <p class="lead" data-en="From a library book to online play.">도서관의 책 한 권에서 온라인 대결까지.</p>
+  <div class="timeline">
+    <div class="tl reveal"><div class="when">2025.11.19</div><h3 data-en="Birth">탄생</h3><p data-en="It started with a Python book picked up by chance in the library. From the book's 'Submarine game', the submarine became a character and the bubbles became coins.">도서관에서 우연히 집은 파이썬 책이 시작이었어요. 책 속의 '잠수함 게임'에서 잠수함을 캐릭터로, 공기 방울을 동전으로 바꿔 만들었어요.</p></div>
+    <div class="tl reveal"><div class="when">2025.12.19</div><h3 data-en="First shown">첫 공개</h3><p data-en="Shown at the school talent show, where it was a big hit with friends.">학예회에서 첫 공개. 친구들에게 큰 인기를 얻었어요.</p></div>
+    <div class="tl reveal"><div class="when">0.x</div><h3 data-en="Early versions">초기 버전</h3><p><span class="ver">0.3</span><span data-en="Obstacles">장애물</span> · <span class="ver">0.4</span><span data-en="New features">새로운 기능</span> · <span class="ver">0.5</span><span data-en="HP">HP</span></p><p data-en="The basics of the game came together step by step.">게임의 기본 틀이 하나씩 갖춰졌어요.</p></div>
+    <div class="tl reveal"><div class="when">1.0 ~ 1.3</div><h3 data-en="Settling in">자리잡기</h3><p><span class="ver">1.0~1.2</span><span data-en="Polished; the pygame edition branched off">게임을 다듬으며 pygame 에디션이 갈라져 나왔어요</span></p><p><span class="ver">1.3</span><span data-en="HALL OF FAME: high score system">HALL OF FAME · 최고기록 시스템</span></p><p><span class="ver">1.3.1</span><span data-en="PIXEL SHIFT: pixel art images">PIXEL SHIFT · 픽셀 아트 이미지</span></p><p><span class="ver">1.3.2</span><span data-en="BALANCE PATCH: balance, Settings tab, 6 ranks">BALANCE PATCH · 밸런스 조정, 설정 탭, 계급 6단계</span></p></div>
+    <div class="tl reveal"><div class="when">1.4 ~ 1.6</div><h3 data-en="More content">콘텐츠 확장</h3><p><span class="ver">1.4</span><span data-en="Achievements">업적 시스템</span></p><p><span class="ver">1.4.1</span><span data-en="Missions and Coin Family skins">미션 시스템과 동전 가족 스킨</span></p><p><span class="ver">1.5</span><span data-en="Hidden difficulty and 3 hidden modes revealed">숨겨진 난이도 1종과 모드 3종 공개</span></p><p><span class="ver">1.6</span><span data-en="4 new items: Time Freeze / Gold Rush / Mini Me / Rewind">새 아이템 4종 (타임프리즈 / 골드러시 / 미니미 / 되감기)</span></p></div>
+    <div class="tl reveal"><div class="when">1.7 ~ 1.9</div><h3 data-en="Getting richer">더 풍성하게</h3><p><span class="ver">1.7</span><span data-en="COIN FAMILY 2: Sister / Uncle / Pet Coin / Twins">COIN FAMILY 2 · 누나 / 삼촌 / 반려동전 / 쌍둥이</span></p><p><span class="ver">1.8</span><span data-en="TWISTED: 2 new obstacles, 2 new coins">TWISTED · 새 장애물 2종, 새 코인 2종</span></p><p><span class="ver">1.9</span><span data-en="ANIMATED: code animations, item slot display">ANIMATED · 코드 애니메이션, 아이템 슬롯 표시</span></p></div>
+    <div class="tl reveal"><div class="when">2.0</div><h3 data-en="To the web">웹으로</h3><p data-en="Now you can play in a web browser too. How to Play, History and Credits tabs were added, and the menu buttons got smaller.">웹 브라우저에서도 즐길 수 있게 되었어요. 사용 방법, 역사서, 저작권 탭이 생기고 메뉴 버튼이 작아졌어요.</p></div>
+    <div class="tl reveal"><div class="when">2.0.1 ~ 2.0.2</div><h3 data-en="1119 &amp; Halloween">1119, 할로윈</h3><p data-en="A hidden skin, item L, pumpkin obstacles, Trick or Treat and the Halloween Coin were added.">숨겨진 스킨, 새 아이템 L, 호박 장애물, 트릭 오어 트릿, 할로윈 동전이 생겼어요.</p></div>
+    <div class="tl reveal"><div class="when">2.1</div><h3>VERSUS</h3><p data-en="A 2-player Versus mode for one keyboard was added.">한 키보드로 둘이 겨루는 2인 대결 모드가 생겼어요.</p></div>
+    <div class="tl reveal"><div class="when">2.2</div><h3>ONLINE</h3><p data-en="Online Versus over the internet was added (web / PC). Meet a friend by random match or room code.">인터넷으로 겨루는 온라인 대결이 생겼어요 (웹 / PC). 랜덤매칭이나 방 코드로 친구와 만나요.</p></div>
+  </div>
+  <p class="lead" style="margin-top:6px" data-en="One year since the beginning, and Coin Game goes on.">처음 만든 지 1년, 앞으로도 동전게임은 계속됩니다.</p>
+</div></section>
 
-    function custom_prerun(){
-        // no python main and no (MEMFS + VFS) yet.
-        console.log(__FILE__, "custom_prerun")
+<section id="howto"><div class="wrap">
+  <h2><small>HOW TO PLAY</small><span data-en="How to play">조작법</span></h2>
+  <div class="grid">
+    <div class="card reveal"><h3 data-en="Basic controls">기본 조작</h3><ul class="plain">
+      <li><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> / <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> <span data-en="move">이동</span></li>
+      <li><kbd>Space</kbd> <span data-en="1 HP → 5 points">체력 1 → 점수 5점</span></li>
+      <li><kbd>Shift</kbd> <span data-en="5 points → 1 HP">점수 5점 → 체력 1</span></li>
+    </ul></div>
+    <div class="card reveal"><h3 data-en="Goal">목표</h3><p data-en="Collect as many coins as you can before time runs out. A hit costs 1 HP, then you are invincible for 0.7s. At 0 HP, the game is over.">제한 시간 안에 동전을 최대한 많이 모으세요. 장애물에 닿으면 체력이 1 줄고, 맞은 직후 0.7초는 무적이에요. 체력이 0이 되면 게임 오버!</p></div>
+    <div class="card reveal"><h3 data-en="Tips">알아 두세요</h3><ul class="plain">
+      <li data-en="Settings and records are saved in this browser. Clearing site data removes them.">설정과 기록은 이 브라우저에 저장돼요. 사이트 데이터를 지우면 사라져요.</li>
+      <li data-en="If the keys do nothing, click the game once.">방향키가 안 먹히면 게임 화면을 한 번 클릭하세요.</li>
+    </ul></div>
+  </div>
+  <details>
+    <summary data-en="Update notes">업데이트 내역</summary>
+    <ul>
+      <li><b>2.2 ONLINE</b> — <span data-en="Online Versus (random match / room code), admin tools">온라인 대결(랜덤매칭 / 방 코드), 관리자 기능</span></li>
+      <li><b>2.1 VERSUS</b> — <span data-en="2-player Versus on one keyboard">한 키보드로 하는 2인 대결</span></li>
+      <li><b>2.0.2 HALLOWEEN</b> — <span data-en="Halloween event">할로윈 이벤트</span></li>
+      <li><b>2.0</b> — <span data-en="The web version begins">웹 버전 시작</span></li>
+    </ul>
+  </details>
+</div></section>
+</main>
 
-    }
+<footer><div class="wrap">
+  <p><button class="primary" type="button" data-play>▶ <span data-en="Play the demo">데모 동전게임 해보기</span></button></p>
+  <p>Developed by jhhj67</p>
+  <p data-en="Code: Claude (Anthropic) · Images: Gemini (Google) · Music: Suno · Font (web): Galmuri14 © Lee Minseo (SIL OFL 1.1)">코드: Claude (Anthropic) · 이미지: Gemini (Google) · 배경음악: Suno · 폰트(웹): 갈무리14 © Lee Minseo (SIL OFL 1.1)</p>
+  <p data-en="Made with Python and pygame.">Python 과 pygame 으로 만들었습니다.</p>
+</div></footer>
 
-    function custom_postrun(){
-        // python main and no VFS filesystem yet.
-        console.log(__FILE__, "custom_postrun")
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-label="동전게임 데모">
+  <div class="mbar">
+    <b>🪙 <span data-en="Coin Game demo">동전게임 데모</span></b>
+    <a class="btn" id="newtab" href="game.html" target="_blank" rel="noopener">↗ <span data-en="Open in new tab">새 탭에서 열기</span></a>
+    <button type="button" id="fs">⛶ <span data-en="Fullscreen">전체 화면</span></button>
+    <button type="button" id="close" aria-label="닫기">✕ <span data-en="Close">닫기</span></button>
+  </div>
+  <div class="mstage" id="mstage">
+    <div class="loading" aria-live="polite">
+      <img src="img/coin.png" alt="" onerror="this.style.display='none'">
+      <div data-en="Loading the game...">게임을 불러오는 중...</div>
+      <div style="font-size:13px" data-en="The first load can take a minute or two. Click the game once loaded to start.">처음 열 때는 1~2분 걸릴 수 있어요. 불러온 뒤 화면을 한 번 클릭하면 시작해요.</div>
+    </div>
+    <iframe id="game" title="동전게임" allow="autoplay; fullscreen; gamepad; clipboard-write" allowfullscreen></iframe>
+  </div>
+  <p class="mhint" data-en="Keyboard required. Closing this window stops the game." >키보드가 필요해요. 이 창을 닫으면 게임이 꺼져요.</p>
+</div>
 
-    }
+<script>
+(function(){
+  var $=function(s){return document.querySelector(s)}, $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+  var root=document.documentElement;
+  function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
 
-    function debug() {
-        // allow to gain access to dev tools from js console
-        // but only on desktop. difficult to reach when in iframe
-        python.config.debug = true
-        custom_onload(false)
-        Module.PyRun_SimpleString("shell.uptime()")
-        window_resize()
-    }
+  /* 한국어 / English : 글자를 data-en 으로 바꿔치기 (원래 한국어는 data-ko 에 보관) */
+  var nodes=$$('[data-en]');
+  nodes.forEach(function(n){n.setAttribute('data-ko',n.innerHTML)});
+  function setLang(en){
+    nodes.forEach(function(n){n.innerHTML=n.getAttribute(en?'data-en':'data-ko')});
+    root.lang=en?'en':'ko';
+    document.title=en?'Coin Game':'동전게임 · Coin Game';
+    $('.brand span').textContent=en?'Coin Game':'동전게임';
+    $('#modal').setAttribute('aria-label',en?'Coin Game demo':'동전게임 데모');
+    store('site_lang',en?'en':'ko');
+  }
+  $('#lang').onclick=function(){setLang(root.lang!=='en')};
+  if(store('site_lang')==='en')setLang(true);
 
-    function info_inline(data){
-        document.getElementById("info").innerHTML = data
-    }
+  /* 스크롤하면 카드가 부드럽게 나타남 */
+  var rv=$$('.reveal');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -8% 0px'});
+    rv.forEach(function(n){io.observe(n)});
+  }else rv.forEach(function(n){n.classList.add('in')});
 
-    function info_online(url) {
-        // display info about current APK
-        fetch( url /*, options */)
-            .then((response) => response.text())
-            .then((html) => {
-                info_inline(html);
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
-    }
+  /* 지금 보는 구역 메뉴 표시 */
+  var links=$$('#links a');
+  if('IntersectionObserver' in window){
+    var so=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(a){a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id)})}})},{rootMargin:'-45% 0px -50% 0px'});
+    $$('main section').forEach(function(s){so.observe(s)});
+  }
 
-    function frame_online(url) {
-        window.frames["iframe"].location = url;
-    }
-
-    </script>
-
+  /* 데모 창: 열 때 게임을 불러오고, 닫으면 끔 (소리도 같이 꺼짐) */
+  var modal=$('#modal'), fr=$('#game'), st=$('#mstage'), lastBtn=null;
+  function open(){
+    lastBtn=document.activeElement;
+    modal.hidden=false; document.body.classList.add('lock');
+    if(!fr.getAttribute('src')||fr.getAttribute('src')==='about:blank'){st.classList.remove('ready');fr.src='game.html'}
+    setTimeout(function(){try{fr.focus()}catch(e){}},300);
+    if(location.hash!=='#play'){try{history.replaceState(null,'','#play')}catch(e){}}
+  }
+  function close(){
+    modal.hidden=true; document.body.classList.remove('lock'); fr.src='about:blank'; st.classList.remove('ready');
+    if(location.hash==='#play'){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+    if(lastBtn&&lastBtn.focus)try{lastBtn.focus()}catch(e){}
+  }
+  $$('[data-play]').forEach(function(b){b.onclick=open});
+  $('#close').onclick=close;
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!modal.hidden&&!document.fullscreenElement)close()});
+  fr.addEventListener('load',function(){if(fr.getAttribute('src')!=='about:blank'){st.classList.add('ready')}});
+  setTimeout(function(){if(!modal.hidden)st.classList.add('ready')},25000);
+  $('#fs').onclick=function(){
+    var rq=st.requestFullscreen||st.webkitRequestFullscreen;
+    try{if(rq)rq.call(st)}catch(e){}
+    setTimeout(function(){try{fr.focus()}catch(e){}},300);
+  };
+  st.addEventListener('click',function(){try{fr.focus()}catch(e){}});
+  window.addEventListener('hashchange',function(){
+    if(location.hash==='#play'&&modal.hidden)open();
+    else if(location.hash!=='#play'&&!modal.hidden)close();
+  });
+  if(location.hash==='#play')open();   // 주소 끝에 #play 를 붙이면 바로 데모가 열려요
+})();
+</script>
 </body>
 </html>

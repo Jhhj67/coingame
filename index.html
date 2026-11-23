@@ -262,11 +262,12 @@ footer p{margin:4px 0}
 
 <section id="download"><div class="wrap">
   <h2><small>DOWNLOAD</small><span data-en="PC version (Windows)">컴퓨터용 다운로드 (Windows)</span></h2>
-  <p class="lead" data-en="Run the setup wizard and follow the steps (Next &gt; Next &gt; Install). Online play works too.">설치 파일을 실행하고 안내대로 다음 &gt; 다음 &gt; 설치만 누르면 돼요. 온라인 대결도 됩니다.</p>
+  <p class="lead" data-en="Run the setup wizard and follow the steps (Next &gt; Next &gt; Install). Online play works too.">설치 파일을 실행하고 안내대로 다음 &gt; 다음 &gt; 설치만 누르면 돼요. 온라인 대결도 됩니다. \nexe 버전은 현재 2.5.1이며, 곧 최신 버전으로 갱신됩니다.</p>
   <div class="cta" style="justify-content:flex-start">
     <a class="btn primary big" id="dl" href="#download" data-en="⬇ Download for Windows">⬇ Windows용 다운로드</a>
   </div>
   <p class="lead" id="dlnote" style="margin-top:12px;font-size:14px" data-en="On first launch, Windows may show a blue 'protected your PC' box. Click 'More info' then 'Run anyway' (the program is unsigned).">처음 실행할 때 파란 'Windows의 PC 보호' 창이 뜨면 '추가 정보' → '실행'을 누르세요. (서명이 없는 프로그램이라 나오는 안내예요.)</p>
+ 
 </div></section>
 
 <section id="howto"><div class="wrap">
@@ -329,7 +330,7 @@ footer p{margin:4px 0}
 <script>
 (function(){
   /* ▼ 다운로드 주소. GitHub Releases 에 CoinGame_Setup_2.7.exe 를 올린 뒤 아래에 붙여 넣으세요. 비워 두면 '준비 중'으로 보여요. */
-  var DOWNLOAD_URL='';
+  var DOWNLOAD_URL='https://github.com/Jhhj67/coingame/releases/download/2.7.1/CoinGame_Setup_2.7.1.exe';
   var $=function(s){return document.querySelector(s)}, $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
   var root=document.documentElement;
   function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
